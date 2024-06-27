@@ -36,7 +36,7 @@ const App = () => {
         <option value="PSI003">PSI003</option>
         <option value="PSI004">PSI004</option>
         <option value="PSI005">PSI005</option>
-        <option value="PSI006">PSI006</option>
+        <option value="PSI006">PSI036</option>
       </select>
       <pre>{jsonData}</pre>
     </div>

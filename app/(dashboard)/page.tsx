@@ -1,74 +1,107 @@
-'use client'
-
-import subjectCard from './components/subject_Card';
+'use client';
+import React, { useState, useEffect } from 'react';
 import templateCard from './components/template_Card';
 import timerCard from './components/timer_Card';
 import weatherCard from './components/weather_Card';
-
-const subjectData = [
-  { id: 'Subject 1', hr: 90, temp: 37 },
-  { id: 'Subject 2', hr: 120, temp: 40 },
-  { id: 'Subject 3', hr: 100, temp: 38 },
-  { id: 'Subject 4', hr: '--', temp: '--' },
-  { id: 'Subject 5', hr: 90, temp: 37 },
-  { id: 'Subject 6', hr: 120, temp: 40 },
-  { id: 'Subject 7', hr: 100, temp: 38 },
-  { id: 'Subject 8', hr: '--', temp: '--' },
-  { id: 'Subject 9', hr: 90, temp: 37 },
-  { id: 'Subject 10', hr: 120, temp: 40 },
-  { id: 'Subject 11', hr: 100, temp: 38 },
-  { id: 'Subject 12', hr: '--', temp: '--' },
-  { id: 'Subject 13', hr: 90, temp: 37 },
-  { id: 'Subject 14', hr: 120, temp: 40 },
-  { id: 'Subject 15', hr: 100, temp: 38 },
-  { id: 'Subject 16', hr: '--', temp: '--' },
-];
+import Dyanamic_card from './components/dynamic_card';
+import UniqueID from './components/uniqueID';
+import Papa from 'papaparse';
 
 export default function Page() {
+  const [subjects, setSubjects] = useState([]);
+  const [counts, setCounts] = useState({ success: 0, warning: 0, danger: 0, secondary: 0 });
+  const [initialized, setInitialized] = useState(false);
+
+  const handleSubjectsLoaded = (uniqueSubjects) => {
+    setSubjects(uniqueSubjects);
+  };
+
+  const updateCounts = (category) => {
+    setCounts(prevCounts => ({
+      ...prevCounts,
+      [category]: prevCounts[category] + 1
+    }));
+  };
+
+  useEffect(() => {
+    if (subjects.length > 0 && !initialized) {
+      setInitialized(true);
+      subjects.forEach(subject => {
+        fetchDataForSubject(subject);
+      });
+    }
+  }, [subjects, initialized]);
+
+  const fetchDataForSubject = async (subject) => {
+    try {
+      const csvResponse = await fetch('./New_Coolbit.csv');
+      if (!csvResponse.ok) {
+        throw new Error('Failed to fetch CSV data');
+      }
+      const csvData = await csvResponse.text();
+      const parsedData = Papa.parse(csvData, { header: true }).data;
+      const filteredData = parsedData.filter(row => row['Subject No.'] === subject && row['Session'] === 'RUN');
+      const lastItem = filteredData[filteredData.length - 1];
+
+      if (lastItem) {
+        const HR = lastItem['CB_HR'] && !isNaN(lastItem['CB_HR']) ? Number(lastItem['CB_HR']).toPrecision(3) : '--';
+        const Temp = lastItem['CB_Tsk_skin'] && !isNaN(lastItem['CB_Tsk_skin']) ? Number(lastItem['CB_Tsk_skin']).toPrecision(3) : '--';
+        const category = HR === '--'
+          ? 'secondary'
+          : Number(HR) >= 120
+            ? 'danger'
+            : Number(HR) >= 100
+              ? 'warning'
+              : 'success';
+        updateCounts(category);
+      } else {
+        updateCounts('secondary');
+      }
+    } catch (error) {
+      console.error('Error fetching or parsing CSV data:', error);
+    }
+  };
+
+  const totalCount = counts.success + counts.warning + counts.danger + counts.secondary;
+
   return (
-    <>
-      <div>
-        <div className="row mt-3">
-          <div className="col-sm-12 col-md-4">
-            {templateCard("Physical Training 1", "23em", "2em", "light")}
+    <div>
+      <div className="row mt-3">
+        <div className="col-sm-12 col-md-4">
+          {templateCard("Physical Training 1", "23em", "2em", "light")}
+        </div>
+        <div className="col-sm-6 col-md-2">
+          {templateCard(`${counts.danger}/${totalCount}`, "10em", "2em", "danger")}
+        </div>
+        <div className="col-sm-6 col-md-2">
+          {templateCard(`${counts.warning}/${totalCount}`, "10em", "2em", "warning")}
+        </div>
+        <div className="col-sm-6 col-md-2">
+          {templateCard(`${counts.secondary}/${totalCount}`, "10em", "2em", "secondary")}
+        </div>
+        <div className="col-sm-6 col-md-2">
+          {templateCard(`${counts.success}/${totalCount}`, "10em", "2em", "success")}
+        </div>
+      </div>
+
+      <div className="row">
+        <div className="col-12 col-md-4">
+          <div style={{ paddingTop: '1em' }}>
+            {timerCard()}
           </div>
-          <div className="col-sm-6 col-md-2">
-            {templateCard("4/16", "10em", "2em", "danger")}
-          </div>
-          <div className="col-sm-6 col-md-2">
-            {templateCard("4/16", "10em", "2em", "warning")}
-          </div>
-          <div className="col-sm-6 col-md-2">
-            {templateCard("4/16", "10em", "2em", "secondary")}
-          </div>
-          <div className="col-sm-6 col-md-2">
-            {templateCard("4/16", "10em", "2em", "success")}
+          <div style={{ paddingTop: '1em' }}>
+            {weatherCard()}
           </div>
         </div>
-
-        <div className="row">
-          <div className="col-12 col-md-4">
-            <div style={{ paddingTop: '1em' }}>
-              {timerCard()}
-            </div>
-            <div style={{ paddingTop: '1em' }}>
-              {weatherCard()}
-            </div>
-          </div>
-          <div className="col-12 col-md-8 col-sm-6">
-            <div className="row row-cols-2 row-cols-md-4 g-2" style={{ paddingTop: '2em'}}>
-              {subjectData.map((subject) => (
-                <div key={subject.id} className="col">
-                  {subjectCard(subject.hr == '--' ? 'secondary' : Number(subject.hr) >= 120 ? 'danger' : Number(subject.hr) >= 100 ? 'warning' : 'success',
-                    subject.id,
-                    subject.hr,
-                    subject.temp)}
-                </div>
-              ))}
-            </div>
+        <div className="col-12 col-md-8 col-sm-6">
+          <div className="row row-cols-2 row-cols-md-4 g-2" style={{ paddingTop: '2em' }}>
+            <UniqueID onSubjectsLoaded={handleSubjectsLoaded} />
+            {subjects.map(subject => (
+              <Dyanamic_card key={subject} subject={subject} />
+            ))}
           </div>
         </div>
       </div>
-    </>
-  )
+    </div>
+  );
 }
