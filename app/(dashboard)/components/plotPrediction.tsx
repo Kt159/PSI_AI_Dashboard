@@ -1,37 +1,23 @@
 'use client'
 import React, { useEffect, useRef, useState } from 'react';
+import PredictionFetcher from './prediction_Fetcher';
 import Chart from 'chart.js/auto';
-import Papa from 'papaparse';
 
-const PlotChart = ({ session, subject, data, label, id, colour }) => {
+const PlotPredict = ({ session, subject, label, id, colour }) => {
   const chartRef = useRef(null);
   const [error, setError] = useState(null);
+  const {predictedIndices, predictedValues } = PredictionFetcher({ session, subject });
 
   useEffect(() => {
     const fetchData = async () => {
-
       try {
-        // Fetch CSV data
-        const csvResponse = await fetch('./processed_coolbit.csv');
-        if (!csvResponse.ok) {
-          throw new Error('Failed to fetch CSV data');
-        }
-        const csvData = await csvResponse.text();
-        const parsedData = Papa.parse(csvData, { header: true }).data;
+        // Prepare X and Y data for the predictions dataset
+        const predictionPoints = predictedIndices.map((index, i) => ({
+          x: index, 
+          y: predictedValues[i],
+        }));
 
-        // Filter CSV data
-        const filteredData = parsedData.filter(row => row['Subject No.'] === subject && row['Phase'] === 'Activity' && row['Session'] == session);
-
-        // Prepare X and Y data for the main dataset
-        const X_labels = filteredData.map(row => parseFloat(row['Time (min)']));
-        const y_count = filteredData.map((row) => {
-          return {
-            x: parseFloat(row['Time (min)']),
-            y: parseFloat(row[data]),
-            backgroundColor:colour,
-            borderColor: colour,
-          };
-        });
+        console.log(predictedIndices)
 
         const chartCanvas = document.getElementById(id);
         if (chartCanvas instanceof HTMLCanvasElement) {
@@ -41,18 +27,18 @@ const PlotChart = ({ session, subject, data, label, id, colour }) => {
           chartRef.current = new Chart(chartCanvas, {
             type: 'line',
             data: {
-              labels: X_labels,
+              labels: predictedIndices,
               datasets: [
                 {
                   label: label,
-                  data: y_count.map(point => ({ x: point.x, y: point.y })),
+                  data: predictionPoints.map(point => ({ x: point.x, y: point.y })),
                   backgroundColor: colour,
                   borderColor: colour,
                   borderWidth: 1,
-                  pointBackgroundColor: y_count.map(point => point.backgroundColor),
+                  pointBackgroundColor: colour,
                   yAxisID: 'left-y-axis',
                 }
-              ]
+              ],
             },
             options: {
               responsive: true,
@@ -100,9 +86,9 @@ const PlotChart = ({ session, subject, data, label, id, colour }) => {
     };
 
     fetchData();
-  }, [session, subject, data, label, id, colour]);
+  }, [session, subject, label, id, colour, predictedIndices,predictedValues]);
 
   return <canvas id={id}></canvas>;
 };
 
-export default PlotChart;
+export default PlotPredict;

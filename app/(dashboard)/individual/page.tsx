@@ -1,6 +1,6 @@
 'use client'
 import { CgProfile } from "react-icons/cg";
-import { MdOutlineWaterDrop } from "react-icons/md";
+import { IoPersonOutline } from "react-icons/io5";
 import { CiLineHeight } from "react-icons/ci";
 import { LiaWeightHangingSolid } from "react-icons/lia";
 import IconBackground from "./../components/icon_bg";
@@ -9,12 +9,24 @@ import { LuHeartPulse } from "react-icons/lu";
 import { TbDeviceWatchStats } from "react-icons/tb";
 import { FaTemperatureHalf } from "react-icons/fa6";
 import PlotChart from "../components/plotChart";
+import PlotPredict from "../components/plotPrediction";
 import DataFetcher from "../components/data_Fetcher";
-import Dropdown from "../components/dropDown";
-import React,{useState} from "react";
+import Subject_Dropdown from "../components/subject_dropDown";
+import Session_Dropdown from "../components/session_dropDown";
+import PredictionFetcher from "../components/prediction_Fetcher";
+import React,{useState, useEffect} from "react";
+import { useSearchParams } from 'next/navigation';
 
 export default function Page() {
-  const [subject, setSubject] = useState<string>('');
+  const searchParams = useSearchParams();
+  const [subject, setSubject] = useState<string>(searchParams.get('subject') || '');
+  const [session, setSession] = useState<string>(searchParams.get('session') || '');
+
+  const { predictedValues, predictedIndices } = PredictionFetcher({ session, subject });
+  const lastIndex = predictedValues.length > 0 ? predictedValues.length - 1 : null;
+  const lastPredictedValue = lastIndex !== null ? predictedValues[lastIndex].toPrecision(3) : null;
+
+  console.log(predictedValues, predictedIndices)
 
   return (
   <div className="d-flex">
@@ -24,18 +36,21 @@ export default function Page() {
         <IconBackground Icon={CgProfile} colour="orange"/> 
       </div>
       <div className="col-sm-2" style={{ fontSize: '2em', fontWeight: 'bold', textAlign: 'center', paddingLeft: '1.5em' }}>
-        <Dropdown subject={subject} onSubjectChange={setSubject}/>
+        <Subject_Dropdown subject={subject} onSubjectChange={setSubject}/>
+        <Session_Dropdown session={session} onSessionChange={setSession}/>
       </div>
     </div>
 
   <div className="row align-items-center justify-content" style={{ paddingTop: '5em' }}>
   <div className="col-sm-2" style={{ fontSize: '2.5em', fontWeight: 'bold', textAlign: 'left', paddingLeft: '0.5em' }}>
-    <IconBackground Icon={MdOutlineWaterDrop} colour="red"/> 
+    <IconBackground Icon={IoPersonOutline} colour="red"/> 
   </div>
   <div className="col-sm-2" style={{ fontSize: '1.8em', fontWeight: 'bold', textAlign: 'left', paddingLeft: '2em', paddingTop: '0.5em' }}>
-    A+
+      <span>
+            <DataFetcher dataframe='demograph'session={session}subject={subject}dataKey="Gender"/>
+      </span>
     <div style={{ fontSize: '0.6em', fontWeight: 'bold' }}>
-      Blood
+      Gender
     </div>
     </div>
   </div>
@@ -48,7 +63,7 @@ export default function Page() {
   <div className="col-sm-2" style={{fontSize: '1.8em', fontWeight: 'bold', textAlign: 'left', paddingLeft: '2em', paddingTop: '0.5em' }}>
     <div style={{ display: 'flex', alignItems: 'center' }}>
       <span>
-            <DataFetcher dataframe='demograph'subject={subject}dataKey="Height"/>
+            <DataFetcher dataframe='demograph'session={session}subject={subject}dataKey="Height"/>
       </span>
       <div style={{ fontSize: '0.6em', fontWeight: 'bold', marginLeft: '0.5em' }}>
         cm
@@ -67,7 +82,7 @@ export default function Page() {
   <div className="col-sm-2" style={{fontSize: '1.8em', fontWeight: 'bold', textAlign: 'left', paddingLeft: '2em', paddingTop: '0.5em' }}>
     <div style={{ display: 'flex', alignItems: 'center' }}>
       <span>
-            <DataFetcher dataframe='demograph' subject={subject} dataKey="Body Mass"/> 
+            <DataFetcher dataframe='demograph'session={session} subject={subject} dataKey="Body Mass"/> 
         </span>
       <div style={{ fontSize: '0.6em', fontWeight: 'bold', marginLeft: '0.5em' }}>
         kg
@@ -102,7 +117,7 @@ export default function Page() {
         <div style={{ display: 'flex', alignItems: 'center' }}>
 
           <span>
-            <DataFetcher dataframe='coolbit'subject={subject} dataKey="CB_HR"/> 
+            <DataFetcher dataframe='coolbit'session={session} subject={subject} dataKey="CB_HR"/> 
           </span>
 
           <div style={{ fontSize: '0.6em', fontWeight: 'bold', marginLeft: '0.5em' }}>
@@ -124,7 +139,7 @@ export default function Page() {
       <div style={{ fontSize: '1.8em', fontWeight: 'bold', textAlign: 'left',  paddingLeft: '2em'}}>
         <div style={{ display: 'flex', alignItems: 'center' }}>
           <span>
-            <DataFetcher dataframe='coolbit'subject={subject} dataKey="CB_Tsk_skin"/> 
+            <DataFetcher dataframe='coolbit'session={session} subject={subject} dataKey="CB_Tsk_skin"/> 
           </span>
           <div style={{ fontSize: '0.6em', fontWeight: 'bold', marginLeft: '0.5em' }}>
             °C
@@ -145,7 +160,7 @@ export default function Page() {
       <div style={{ fontSize: '1.8em', fontWeight: 'bold', textAlign: 'left', paddingLeft: '2em'}}>
         <div style={{ display: 'flex', alignItems: 'center' }}>
           <span>
-            <DataFetcher dataframe='coolbit'subject={subject}dataKey="Gold_Tc"/> 
+            {lastPredictedValue}
           </span>
           <div style={{ fontSize: '0.6em', fontWeight: 'bold', marginLeft: '0.5em' }}>
             °C
@@ -162,13 +177,13 @@ export default function Page() {
 <div className="container">
   <div className="row">
     <div className="chart-container" style={{ height: '40vh', width: '100wh'}}>
-      <PlotChart subject={subject} data="CB_Tsk_skin" label="Skin Temperature (°C)" id="temperature_time" colour="mediumturquoise"/>
+      <PlotPredict session={session}subject={subject} label="Predicted Core Temperature (°C)" id="temperature_time" colour="pink"/>
     </div>
   </div>
 
   <div className="row">
   <div className="chart-container" style={{ height: '40vh', width: '100wh'}}>
-      <PlotChart subject={subject} data="CB_HR" label="Heart Rate (bpm)" id="hr_time" colour="mediumpurple"/>
+      <PlotChart session={session}subject={subject} data="CB_HR" label="Heart Rate (bpm)" id="hr_time" colour="mediumpurple"/>
     </div>
   </div>
 </div>

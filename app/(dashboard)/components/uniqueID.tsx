@@ -1,12 +1,14 @@
 'use client'
-import React, { useEffect } from 'react';
+import React, { useEffect,useState} from 'react';
 import Papa from 'papaparse';
 
 const UniqueID = ({ onSubjectsLoaded }) => {
+  const [fetched, setFetch] = useState(false);
+
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const csvResponse = await fetch('./Lab_demographic.csv');
+        const csvResponse = await fetch('./Trial_demographic.csv');
         if (!csvResponse.ok) {
           throw new Error('Failed to fetch CSV data');
         }
@@ -20,7 +22,10 @@ const UniqueID = ({ onSubjectsLoaded }) => {
       }
     };
 
-    fetchData();
+    if (!fetched){
+      fetchData();
+      setFetch(true);
+    }
   }, [onSubjectsLoaded]);
 
   return null;

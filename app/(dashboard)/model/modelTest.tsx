@@ -2,13 +2,13 @@
 import React, { useState, useEffect } from 'react';
 
 const App = () => {
-  const [subject, setSubject] = useState('PSI001');
+  const [subject, setSubject] = useState('F001');
   const [jsonData, setJsonData] = useState('');
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch(`http://localhost:8000/predict/RUN/${subject}`);
+        const response = await fetch(`http://localhost:8000/predict/MFS/${subject}`);
         if (!response.ok) {
           throw new Error('Network response was not ok');
         }
@@ -31,12 +31,12 @@ const App = () => {
     <div>
       <h1>JSON Response</h1>
       <select value={subject} onChange={handleSubjectChange}>
-        <option value="PSI001">PSI001</option>
-        <option value="PSI002">PSI002</option>
-        <option value="PSI003">PSI003</option>
-        <option value="PSI004">PSI004</option>
-        <option value="PSI005">PSI005</option>
-        <option value="PSI006">PSI036</option>
+        <option value="F001">F001</option>
+        <option value="F002">F002</option>
+        <option value="F003">F003</option>
+        <option value="F004">F004</option>
+        <option value="F005">F005</option>
+        <option value="F006">F036</option>
       </select>
       <pre>{jsonData}</pre>
     </div>

@@ -3,13 +3,19 @@ import { Card } from "react-bootstrap";
 import { LuHeartPulse } from "react-icons/lu";
 import { FaTemperatureHalf } from "react-icons/fa6";
 import 'react-grid-layout/css/styles.css';
+import { useRouter } from 'next/navigation';
 
-export default function subjectCard(variant, header, heartrate, temp) {
-    return (
+export default function SubjectCard({variant, heartrate, temp, subject, session}) {
+  const router = useRouter()
+  const handleCardClick = () => {
+    router.push(`/individual?session=${session}&subject=${subject}`)
+  }  
+
+  return (
       <div className="col">
-        <Card style={{ width: '11rem'}} bg={variant} text="black">
+        <Card onClick = {handleCardClick} bg={variant} text="black" style={{ width: '11rem', cursor: 'pointer'}}>
           <Card.Header style={{ fontSize: '1.5em', fontWeight: 'bold', textAlign: 'center' }}>
-            {header}
+            {subject}
           </Card.Header>
           <Card.Body style ={{height:'6rem'}}>
             <div style={{ display: 'flex',  justifyContent: 'center',alignItems: 'center', marginTop:'-1.2rem' }}>
